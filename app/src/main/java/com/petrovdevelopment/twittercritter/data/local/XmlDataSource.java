@@ -52,6 +52,9 @@ public class XmlDataSource implements TwitterDataSource{
         throw new UnsupportedOperationException("for local xml you need the context passed in");
     }
 
+
+
+
     @Override
     public void getTweets(final @NonNull GetTweetsCallback callback, Context context) {
         Runnable runnable = () -> {
@@ -66,6 +69,4 @@ public class XmlDataSource implements TwitterDataSource{
         };
         appExecutors.getXmlIo().execute(runnable);
     }
-
-
 }

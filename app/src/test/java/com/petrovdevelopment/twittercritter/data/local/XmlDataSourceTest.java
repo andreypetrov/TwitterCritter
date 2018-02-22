@@ -2,9 +2,7 @@ package com.petrovdevelopment.twittercritter.data.local;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.support.annotation.NonNull;
 
-import com.google.gson.Gson;
 import com.petrovdevelopment.twittercritter.data.TwitterDataSource;
 import com.petrovdevelopment.twittercritter.model.Tweet;
 import com.petrovdevelopment.twittercritter.utils.AppExecutors;
@@ -18,15 +16,16 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.times;
@@ -42,26 +41,21 @@ public class XmlDataSourceTest {
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    @Mock
-    Executor executor;
-
-    @Mock
-    Context context;
-
-    @Mock
-    TwitterDataSource.GetTweetsCallback getTweetsCallback;
-
     @Captor
     ArgumentCaptor<Runnable> backgroundRunnableArgumentCaptor;
     @Captor
     ArgumentCaptor<Runnable> uiRunnableArgumentCaptor;
 
+    @Captor
+    ArgumentCaptor<Runnable> backgroundRunnableArgumentCaptor2;
+    @Captor
+    ArgumentCaptor<Runnable> uiRunnableArgumentCaptor2;
+
     AppExecutors appExecutors;
 
-    @Before
-    public void setup() {
-        appExecutors = new AppExecutors(executor, executor, executor);
-    }
+
+    @Mock
+    TwitterDataSource.GetTweetsCallback getTweetsCallback;
 
     @Mock
     AssetManager assetManager;
@@ -72,13 +66,29 @@ public class XmlDataSourceTest {
     @Mock
     JsonParser jsonParser;
 
+    @Mock
+    Executor executor;
+
+    @Mock
+    Context context;
+
+    @Test
+    public void getTweets() throws Exception {
+        appExecutors = new AppExecutors(executor, executor, executor);
+        XmlDataSource xmlDataSource = XmlDataSource.getInstance(appExecutors, jsonParser);
+        xmlDataSource.getTweets(getTweetsCallback, context);
+        verify(appExecutors.getXmlIo()).execute(any(Runnable.class));
+    }
+
+
     @Test
     public void verifyOnSuccessWasCalled() throws Exception {
+        appExecutors = new AppExecutors(executor, executor, executor);
         XmlDataSource xmlDataSource = XmlDataSource.getInstance(appExecutors, jsonParser);
         xmlDataSource.getTweets(getTweetsCallback, context);
         when(context.getAssets()).thenReturn(assetManager);
         when(assetManager.open(any(String.class))).thenReturn(inputStream);
-        when(jsonParser.parseTweetsFromReader(isNotNull())).thenReturn(dummyTweets());
+        when(jsonParser.parseTweetsFromReader(isNotNull())).thenReturn(emptyDummyTweets());
         verify(appExecutors.getXmlIo()).execute(backgroundRunnableArgumentCaptor.capture());
         Runnable xmlRunnable = backgroundRunnableArgumentCaptor.getValue();
         xmlRunnable.run();
@@ -86,25 +96,39 @@ public class XmlDataSourceTest {
 
         Runnable uiRunnable = uiRunnableArgumentCaptor.getValue();
         uiRunnable.run();
-        verify(getTweetsCallback).onSuccess(isNotNull());
+        verify(getTweetsCallback).onSuccess(any(List.class));
     }
 
-    private List<Tweet> dummyTweets() {
+    private List<Tweet> emptyDummyTweets() {
         return new ArrayList<>();
     }
 
-
-    @Test
-    public void getTweets() throws Exception {
-        AppExecutors appExecutors = new AppExecutors(executor, executor, executor);
-        XmlDataSource xmlDataSource = XmlDataSource.getInstance(appExecutors, jsonParser);
-        xmlDataSource.getTweets(getTweetsCallback, context);
-        verify(appExecutors.getXmlIo()).execute(any(Runnable.class));
+    private List<Tweet> dummyTweetsFromFile() {
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("timeline.json");
+        Reader inputStreamReader = null;
+        List<Tweet> tweets = null;
+        try {
+            inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
+            tweets = JsonParser.getInstance().parseTweetsFromReader(inputStreamReader);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+        return tweets;
     }
 
-    @Test
-    public void getTweets1() throws Exception {
-    }
-
-
+//    @Test
+//    public void getTweets1() throws Exception {
+//        List<Tweet> dummyTweets = dummyTweetsFromFile();
+//
+//        when(context.getAssets()).thenReturn(assetManager);
+//        when(assetManager.open(any(String.class))).thenReturn(inputStream);
+//        when(jsonParser.parseTweetsFromReader(any(Reader.class))).thenReturn(dummyTweets);
+//        XmlDataSource xmlDataSource = XmlDataSource.getInstance(appExecutors, jsonParser);
+//        xmlDataSource.getTweets(getTweetsCallback, context);
+//        verify(appExecutors.getXmlIo()).execute(backgroundRunnableArgumentCaptor2.capture());
+//        backgroundRunnableArgumentCaptor2.getValue().run();
+//        verify(appExecutors.getMainThreadIo(), times(2)).execute(uiRunnableArgumentCaptor2.capture());
+//        uiRunnableArgumentCaptor2.getValue().run();
+//        verify(getTweetsCallback).onSuccess(dummyTweets);
+//    }
 }

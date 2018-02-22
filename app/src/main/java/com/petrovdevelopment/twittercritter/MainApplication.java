@@ -8,6 +8,7 @@ import com.petrovdevelopment.twittercritter.data.local.JsonParser;
 import com.petrovdevelopment.twittercritter.data.local.XmlDataSource;
 import com.petrovdevelopment.twittercritter.di.Injector;
 import com.petrovdevelopment.twittercritter.utils.AppExecutors;
+import com.twitter.sdk.android.core.Twitter;
 
 /**
  * Coding is fun!
@@ -15,6 +16,12 @@ import com.petrovdevelopment.twittercritter.utils.AppExecutors;
  */
 
 public class MainApplication extends Application implements Injector{
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Twitter.initialize(this);
+    }
 
     @Override
     public TwitterDataSource provideTwitterDataSource() {
