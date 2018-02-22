@@ -8,21 +8,23 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.petrovdevelopment.twittercritter.R;
-import com.petrovdevelopment.twittercritter.data.TwitterDataSource;
 import com.petrovdevelopment.twittercritter.di.Injector;
-import com.petrovdevelopment.twittercritter.model.Tweet;
-import com.petrovdevelopment.twittercritter.model.TwitterError;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.TwitterApiClient;
+import com.twitter.sdk.android.core.TwitterCore;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
+import com.twitter.sdk.android.core.models.Tweet;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MainContract.View{
     TwitterLoginButton loginButton;
     TextView infoView;
+
+    MainContract.Presenter presenter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -31,8 +33,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(findViewById(R.id.toolbar));
         infoView = findViewById(R.id.info_view);
         initTwitterButton();
-        testDataSource();
-
+        //TODO inject twitter client in presenter
+        Injector injector = (Injector) getApplication();
+        presenter = new MainPresenter(this, injector.provideTwitterApiClient());
     }
 
 
@@ -41,36 +44,31 @@ public class MainActivity extends AppCompatActivity {
         loginButton.setCallback(new Callback<TwitterSession>() {
             @Override
             public void success(Result<TwitterSession> result) {
-                infoView.setText(result.toString());
+                presenter.onLoginSuccess();
             }
 
             @Override
             public void failure(TwitterException exception) {
-                infoView.setText(exception.getMessage());
+                presenter.onLoginFailure(exception);
             }
         });
     }
 
-    //TODO move to test case class
-    public void testDataSource() {
-        Injector injector = (Injector) getApplication();
-        TwitterDataSource twitterDataSource = injector.provideTwitterDataSource();
-        twitterDataSource.getTweets(new TwitterDataSource.GetTweetsCallback() {
-            @Override
-            public void onSuccess(List<Tweet> tweets) {
-                Log.i(this.getClass().getSimpleName(), tweets.toString());
-            }
-
-            @Override
-            public void onFailure(TwitterError error) {
-                Log.i(this.getClass().getSimpleName(), error.getMessage());
-            }
-        }, this);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         loginButton.onActivityResult(requestCode, resultCode, data);
+    }
+
+
+    @Override
+    public void showTweets(List<Tweet> tweets) {
+        infoView.setText(tweets.size() + "\n" + tweets.toString());
+    }
+
+    @Override
+    public void showError(String errorMessage) {
+        infoView.setText(errorMessage);
     }
 }

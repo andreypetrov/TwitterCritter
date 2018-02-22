@@ -20,6 +20,7 @@ public interface TwitterDataSource {
     }
 
 
+
     public void getTweets(@NonNull GetTweetsCallback  callback);
     //needed for local retrieval
     public void getTweets(@NonNull GetTweetsCallback  callback, @NonNull Context context);
