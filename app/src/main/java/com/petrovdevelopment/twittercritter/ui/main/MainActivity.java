@@ -20,7 +20,7 @@ import com.twitter.sdk.android.core.models.Tweet;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements MainContract.View{
+public class MainActivity extends AppCompatActivity implements MainContract.View {
     TwitterLoginButton loginButton;
     TextView infoView;
 
@@ -35,9 +35,20 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         initTwitterButton();
         //TODO inject twitter client in presenter
         Injector injector = (Injector) getApplication();
-        presenter = new MainPresenter(this, injector.provideTwitterApiClient());
+        presenter = new MainPresenter(this, injector);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        presenter.start();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        presenter.stop();
+    }
 
     public void initTwitterButton() {
         loginButton = findViewById(R.id.login_button);

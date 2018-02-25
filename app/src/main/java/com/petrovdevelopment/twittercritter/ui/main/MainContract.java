@@ -1,5 +1,6 @@
 package com.petrovdevelopment.twittercritter.ui.main;
 
+import com.petrovdevelopment.twittercritter.data.remote.SimpleTwitterApi;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.models.Tweet;
 
@@ -19,6 +20,7 @@ public interface MainContract {
 
     interface Presenter {
         void start();
+        void stop();
         void onLoginSuccess();
         void onLoginFailure(TwitterException e);
 

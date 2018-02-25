@@ -2,7 +2,7 @@ package com.petrovdevelopment.twittercritter.data.local;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.petrovdevelopment.twittercritter.model.Tweet;
+import com.twitter.sdk.android.core.models.Tweet;
 
 import java.io.Reader;
 import java.util.List;

@@ -1,6 +1,7 @@
 package com.petrovdevelopment.twittercritter.ui.main;
 
 import com.petrovdevelopment.twittercritter.data.remote.SimpleTwitterApi;
+import com.petrovdevelopment.twittercritter.di.Injector;
 import com.twitter.sdk.android.core.TwitterApiClient;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.models.Tweet;
@@ -10,6 +11,12 @@ import com.twitter.sdk.android.tweetui.UserTimeline;
 
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
+import io.reactivex.observers.DisposableObserver;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -20,12 +27,15 @@ import retrofit2.Response;
  */
 
 public class MainPresenter implements MainContract.Presenter {
-    MainContract.View view;
-    SimpleTwitterApi simpleTwitterApi;
+    private MainContract.View view;
 
-    public MainPresenter(MainContract.View view, SimpleTwitterApi simpleTwitterApi) {
+    private Injector injector;
+    private SimpleTwitterApi simpleTwitterApi;
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
+
+    public MainPresenter(MainContract.View view, Injector injector) {
         this.view = view;
-        this.simpleTwitterApi = simpleTwitterApi;
+        this.injector = injector;
     }
 
     @Override
@@ -33,26 +43,41 @@ public class MainPresenter implements MainContract.Presenter {
         //do nothing
     }
 
+    @Override
+    public void stop() {
+        compositeDisposable.clear();
+    }
+
 
     @Override
     public void onLoginSuccess() {
-        //TODO later move elsewhere
-        Call<List<Tweet>> call = simpleTwitterApi.getSimpleStatusesService().homeTimeline(2);
-        call.enqueue(new Callback<List<Tweet>>() {
-            @Override
-            public void onResponse(Call<List<Tweet>> call, Response<List<Tweet>> response) {
-                if (response.body() != null) {
-                    view.showTweets(response.body());
-                } else {
-                    view.showError(response.message());
-                }
-            }
+        this.simpleTwitterApi = injector.provideTwitterApiClient(); //inject only after successful twitter login, because before that twitter session will be null
+        compositeDisposable.add(
+        simpleTwitterApi.getTweets(2)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(tweets -> view.showTweets(tweets),
+                        e -> view.showError(e.getMessage())));
 
-            @Override
-            public void onFailure(Call<List<Tweet>> call, Throwable t) {
-                view.showError(t.getMessage());
-            }
-        });
+
+
+// Use the one below if you want to create a whole observer instead of using the short version above.
+// this may be useful if we want to define a separate class implementing disposable observer and having more logic in it.
+//                .subscribeWith(new DisposableObserver<List<Tweet>>() {
+//            @Override
+//            public void onNext(List<Tweet> tweets) {
+//                view.showTweets(tweets);
+//            }
+//
+//            @Override
+//            public void onError(Throwable e) {
+//                view.showError(e.getMessage());
+//            }
+//
+//            @Override
+//            public void onComplete() {
+//
+//            }
+//        }));
 
     }
 

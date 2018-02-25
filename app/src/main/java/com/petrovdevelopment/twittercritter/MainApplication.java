@@ -29,7 +29,7 @@ public class MainApplication extends Application implements Injector{
 
     @Override
     public TwitterDataSource provideTwitterDataSource() {
-        return XmlDataSource.getInstance(AppExecutors.getInstance(), JsonParser.getInstance());
+        return XmlDataSource.getInstance(JsonParser.getInstance());
     }
 
     @Override

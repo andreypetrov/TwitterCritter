@@ -3,10 +3,12 @@ package com.petrovdevelopment.twittercritter.data;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
-import com.petrovdevelopment.twittercritter.model.Tweet;
-import com.petrovdevelopment.twittercritter.model.TwitterError;
+
+import com.twitter.sdk.android.core.models.Tweet;
 
 import java.util.List;
+
+import io.reactivex.Observable;
 
 /**
  * Coding is fun!
@@ -14,15 +16,9 @@ import java.util.List;
  */
 
 public interface TwitterDataSource {
-    interface GetTweetsCallback {
-        void onSuccess(List<Tweet> tweets);
-        void onFailure(TwitterError error);
-    }
 
-
-
-    public void getTweets(@NonNull GetTweetsCallback  callback);
+    public Observable<List<Tweet>> getTweets();
     //needed for local retrieval
-    public void getTweets(@NonNull GetTweetsCallback  callback, @NonNull Context context);
+    public Observable<List<Tweet>> getTweets(@NonNull Context context);
 
 }

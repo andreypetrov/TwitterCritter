@@ -9,6 +9,8 @@ import com.twitter.sdk.android.core.models.Tweet;
 
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -40,24 +42,13 @@ public class RemoteDataSource implements TwitterDataSource{
     }
 
     @Override
-    public void getTweets(@NonNull GetTweetsCallback callback) {
-        Call<List<Tweet>> call = simpleTwitterApi.getSimpleStatusesService().homeTimeline(2);
-        call.enqueue(new Callback<List<Tweet>>() {
-            @Override
-            public void onResponse(Call<List<Tweet>> call, Response<List<Tweet>> response) {
-                //FIXME switch to using the official tweet model in the callback contract
-                //callback.onSuccess(response.body());
-            }
-
-            @Override
-            public void onFailure(Call<List<Tweet>> call, Throwable t) {
-                callback.onFailure(new TwitterError(t, t.getMessage()));
-            }
-        });
+    public Observable<List<Tweet>> getTweets() {
+        return simpleTwitterApi.getTweets(3)
+        .subscribeOn(Schedulers.io());
     }
 
     @Override
-    public void getTweets(@NonNull GetTweetsCallback callback, @NonNull Context context) {
-
+    public Observable<List<Tweet>> getTweets(@NonNull Context context) {
+        throw new UnsupportedOperationException("context is not required for networking data source. Instead use getTweets() without arguments");
     }
 }
